@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Implementation-Title: Course-Info-Service
+Implementation-Version: 0.0.1-SNAPSHOT
+Built-By: chandra
+Implementation-Vendor-Id: com.chanduonline
+Build-Jdk: 1.8.0_191
+Implementation-URL: https://spring.io/projects/spring-boot/Course-Info
+ -Service
+Created-By: Maven Integration for Eclipse
+Implementation-Vendor: Pivotal Software, Inc.
+
