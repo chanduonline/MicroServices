@@ -1,0 +1,564 @@
+1)Eureaka-server
+=============
+package com.chandra.example.registration;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServer {
+	public static void main(String[] args) {
+		System.setProperty("spring.config.name", "eureka-server");
+
+		SpringApplication.run(EurekaServer.class, args);
+	}
+}
+
+eureka-server.properties
+
+eureka.instance.hostname=localhost
+eureka.client.registerWithEureka=false
+eureka.client.fetchRegistry=false
+ 
+server.port=1111
+ 
+spring.thymeleaf.enabled=false
+
+2.Addition Rest Service
+========================
+
+addition-server.properties
+
+# Spring properties
+spring.application.name=addition-service
+spring.freemarker.enabled=false
+spring.thymeleaf.cache=false
+spring.thymeleaf.prefix=classpath:/addition-server/templates/
+ 
+error.path: /error
+ 
+# HTTP Server
+server.port: 2222
+ 
+eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
+eureka.client.instance.leaseRenewalIntervalInSeconds=5
+management.endpoints.web.exposure.include='*'
+
+package com.chandra.example.rest.addition;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class HomeController {
+
+	@RequestMapping("/")
+	public String home() {
+		return "index";
+	}
+
+}
+
+package com.chandra.example.rest.addition;
+
+import java.util.logging.Logger;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class AdditionController {
+
+	protected Logger logger = Logger.getLogger(AdditionController.class
+			.getName());
+
+	@RequestMapping("/add")
+	public String doAdd(@RequestParam(defaultValue="0") String addend1,
+			@RequestParam(defaultValue="0") String addend2) {
+
+		int augend1 = Integer.valueOf(addend1);
+		int augend2 = Integer.valueOf(addend2);
+		int sum = augend1 + augend2;
+
+		return "{\"addend1\":\"" + addend1 + "\", \"addend2\":\"" + addend2 + "\", \"sum\": \"" + sum + "\"}";
+	}
+}
+
+package com.chandra.example.rest.addition;
+
+import java.util.logging.Logger;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.ComponentScan;
+
+@EnableAutoConfiguration
+@EnableDiscoveryClient
+@ComponentScan
+public class AdditionServer {
+
+	protected Logger logger = Logger.getLogger(AdditionServer.class.getName());
+
+	public static void main(String[] args) {
+		System.setProperty("spring.config.name", "addition-server");
+
+		SpringApplication.run(AdditionServer.class, args);
+	}
+}
+
+3)Substract Rest Service
+========================
+subtraction-server.properties
+
+# Spring properties
+spring.application.name=subtraction-service
+spring.freemarker.enabled=false
+spring.thymeleaf.cache=false
+spring.thymeleaf.prefix=classpath:/subtraction-server/templates/
+ 
+error.path: /error
+ 
+# HTTP Server
+server.port: 3333
+ 
+eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
+eureka.client.instance.leaseRenewalIntervalInSeconds=5
+management.endpoints.web.exposure.include='*'
+
+package com.chandra.example.rest.subtraction;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class HomeController {
+
+	@RequestMapping("/")
+	public String home() {
+		return "index";
+	}
+
+}
+
+package com.chandra.example.rest.subtraction;
+
+import java.util.logging.Logger;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class SubtractionController {
+	protected Logger logger = Logger.getLogger(SubtractionController.class
+			.getName());
+
+	@RequestMapping("/subtract")
+	public String doSubtract(@RequestParam(defaultValue="0") String minuend,
+			@RequestParam(defaultValue="0") String subtrahend) {
+
+		int m = Integer.valueOf(minuend);
+		int s = Integer.valueOf(subtrahend);
+		int difference = m - s;
+
+		return "{\"minuend\":\"" + minuend + "\", \"subtrahend\":\"" + subtrahend + "\", \"difference\": \"" + difference + "\"}";
+	}
+}
+
+package com.chandra.example.rest.subtraction;
+
+import java.util.logging.Logger;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.ComponentScan;
+
+@EnableAutoConfiguration
+@EnableDiscoveryClient
+@ComponentScan
+public class SubtractionServer {
+	protected Logger logger = Logger.getLogger(SubtractionServer.class.getName());
+
+	public static void main(String[] args) {
+		System.setProperty("spring.config.name", "subtraction-server");
+
+		SpringApplication.run(SubtractionServer.class, args);
+	}
+}
+
+4.Web Server
+==============
+web-server.properties
+
+spring.application.name=web-service
+spring.freemarker.enabled=false
+spring.thymeleaf.cache=false
+spring.thymeleaf.prefix=classpath:/web-server/templates/
+ 
+error.path=/error
+ 
+server.port:4444
+ 
+eureka.client.serviceUrl.defaultZone:http://localhost:1111/eureka
+eureka.instance.leaseRenewalIntervalInSeconds:5
+    
+management.endpoints.web.exposure.include='*'
+
+HomeController.java
+
+package com.chandra.example.web;
+ 
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+ 
+@Controller
+public class HomeController {
+ 
+    @RequestMapping("/")
+    public String home() {
+        return "index";
+    }
+ 
+}
+
+WebArithmeticController.java
+
+package com.chandra.example.web;
+ 
+import java.util.logging.Logger;
+ 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+ 
+@Controller
+public class WebArithmeticController {
+    @Autowired
+    protected WebAdditionService additionService;
+ 
+    @Autowired
+    protected WebSubtractionService subtractionService;
+ 
+    protected Logger logger = Logger.getLogger(WebArithmeticController.class
+            .getName());
+ 
+    public WebArithmeticController(WebAdditionService additionService, WebSubtractionService subtractionService) {
+        this.additionService = additionService;
+        this.subtractionService = subtractionService;
+    }
+ 
+    @RequestMapping("/add")
+    public String doAdd(@RequestParam(defaultValue="0") String addend1,
+            @RequestParam(defaultValue="0") String addend2,
+            Model model) {
+ 
+        String sum = additionService.add(addend1, addend2);
+ 
+        logger.info("Sum: " + sum);
+        model.addAttribute("json", sum);
+ 
+        return "sum";
+    }
+ 
+    @RequestMapping("/subtract")
+    public String doSubtract(@RequestParam(defaultValue="0") String minuend,
+            @RequestParam(defaultValue="0") String subtrahend,
+            Model model) {
+ 
+        String difference = subtractionService.subtract(minuend, subtrahend);
+ 
+        logger.info("Difference: " + difference);
+        model.addAttribute("json", difference);
+ 
+        return "difference";
+    }
+}
+
+WebAdditionService.java
+
+package com.chandra.example.web;
+ 
+import java.util.logging.Logger;
+ 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+ 
+@Service
+public class WebAdditionService {
+ 
+    @Autowired
+    @LoadBalanced
+    protected RestTemplate restTemplate;
+ 
+    protected String serviceUrl;
+ 
+    protected Logger logger = Logger.getLogger(WebAdditionService.class
+            .getName());
+ 
+    public WebAdditionService(String serviceUrl) {
+        this.serviceUrl = serviceUrl.startsWith("http") ? serviceUrl
+                : "http://" + serviceUrl;
+    }
+ 
+    public String add(String addend1, String addend2) {
+        return restTemplate.getForObject(serviceUrl + "/add?addend1={addend1}&addend2={addend2}", String.class, addend1, addend2);
+    }
+}
+
+WebSubtractionService.java
+
+package com.chandra.example.web;
+ 
+import java.util.logging.Logger;
+ 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+ 
+@Service
+public class WebSubtractionService {
+    @Autowired
+    @LoadBalanced
+    protected RestTemplate restTemplate;
+ 
+    protected String serviceUrl;
+ 
+    protected Logger logger = Logger.getLogger(WebSubtractionService.class
+            .getName());
+ 
+    public WebSubtractionService(String serviceUrl) {
+        this.serviceUrl = serviceUrl.startsWith("http") ? serviceUrl
+                : "http://" + serviceUrl;
+    }
+ 
+    public String subtract(String minuend, String subtrahend) {
+        return restTemplate.getForObject(serviceUrl + "/subtract?minuend={minuend}&subtrahend={subtrahend}", String.class, minuend, subtrahend);
+    }
+}
+
+Main.java
+
+package com.chandra.example;
+ 
+import com.chandra.example.registration.EurekaServer;
+import com.chandra.example.rest.addition.AdditionServer;
+import com.chandra.example.rest.subtraction.SubtractionServer;
+import com.chandra.example.web.WebServer;
+ 
+public class Main {
+    public static void main(String[] args) {
+ 
+        String serverName = "";
+ 
+        switch (args.length) {
+        case 2:
+            System.setProperty("server.port", args[1]);
+        case 1:
+            serverName = args[0].toLowerCase();
+            break;
+ 
+        default:
+            return;
+        }
+ 
+        if (serverName.equals("eureka")) {
+            EurekaServer.main(args);
+        } else if (serverName.equals("addition")) {
+            AdditionServer.main(args);
+        } else if (serverName.equals("subtraction")) {
+            SubtractionServer.main(args);
+        } else if (serverName.equals("web")) {
+            WebServer.main(args);
+        } else {
+            System.out.println("Unknown server type: " + serverName);
+        }
+    }
+}
+
+index.html
+==========
+
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="header :: copy"></head>
+
+<body>
+
+	<h1>Spring Boot Microservices Example</h1>
+	<h3>Addition Service</h3>
+	<form action="/add">
+	  	First number:<br>
+	  	<input type="number" name="addend1" value="0">
+	  	<br>
+	  	Second number<br>
+	  	<input type="number" name="addend2" value="0">
+	  	<br><br>
+	  	<input type="submit" value="Submit">
+	</form>	
+	<hr>
+	<form action="/subtract">
+	  	First number:<br>
+	  	<input type="number" name="minuend" value="0">
+	  	<br>
+	  	Second number<br>
+	  	<input type="number" name="subtrahend" value="0">
+	  	<br><br>
+	  	<input type="submit" value="Submit">
+	</form>	
+
+	<div th:replace="footer :: copy"></div>
+
+</body>
+</html>
+
+sum.html
+---------
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="header :: copy"></head>
+
+<body>
+	<h1>Sum</h1>
+	<p>JSON result received from Addition Service: <b th:text="${json}">json</b></p>
+
+	<div th:replace="footer :: copy"></div>
+</body>
+</html>
+
+difference.html
+---------------
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="header :: copy"></head>
+
+<body>
+	<h1>Difference</h1>
+	<p>JSON result received from Subtraction Service: <b th:text="${json}">json</b></p>
+
+	<div th:replace="footer :: copy"></div>
+</body>
+</html>
+
+error.html
+-----------
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head th:substituteby="header :: copy"></head>
+
+<body>
+	<h1>An Error Has Occurred</h1>
+
+	<p th:if="${url}">
+		<b>Page:</b> <span th:text="${url}">Page URL</span>
+	</p>
+
+	<p th:if="${timestamp}" id='created'>
+		<b>Occurred:</b> <span th:text="${timestamp}">Timestamp</span>
+	</p>
+
+	<p th:if="${status}">
+		<b>Response Status:</b> <span th:text="${status}">status-code</span> <span
+			th:if="${error}" th:text="'('+${error}+')'">error ...</span>
+	</p>
+
+	<div
+		th:if="${ex} or ${exception} or (${message} and ${message.length() != 0})">
+		<b>Cause:</b> <span th:if="${ex}" th:text="${ex}">ex exception
+			...</span> <span th:if="${exception}" th:text="${exception}">exception
+			...</span> <span th:if="${message} and ${message.length() != 0}"
+			th:text="${message}">message ...</span>
+		<blockquote>
+			<i>Note: You would never generate a page that displays a Java
+				exception to an end-user in a real application</i>
+		</blockquote>
+	</div>
+
+	<p
+		th:unless="${ex} or ${exception} or (${message} and ${message.length() != 0})">
+		Cause unknown (no exception details available)</p>
+
+	<p>
+		You are seeing this error page due to Spring Boot (which returns a
+		view called "error" in response to uncaught exceptions. Since we are
+		using Thymeleaf this corresponds to the template
+		<code>error.html</code>
+		in
+		<code>src/main/resources/templates</code>
+		)
+	</p>
+
+	<div th:substituteby="footer :: copy"></div>
+
+</body>
+</html>
+
+
+header.html
+----------
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="copy">
+<title>Spring Boot Microservices Example</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta
+	content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no"
+	id="Viewport" name="viewport" />
+
+<!-- Bootstrap -->
+<link rel="stylesheet" media="screen"
+	href="//netdna.bootstrapcdn.com/bootstrap/3.0.1/css/bootstrap.min.css" />
+
+<!-- Optional theme -->
+<link rel="stylesheet"
+	href="//netdna.bootstrapcdn.com/bootstrap/3.0.1/css/bootstrap-theme.min.css" />
+
+<link rel="stylesheet" href="/styles.css" />
+
+</head>
+
+<body th:fragment="copy" class="container">
+	
+</body>
+</html>
+
+footer.html
+-----------
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+	<footer>Example by Chandu - +91-9866037742</footer>
+
+	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script th:fragment="copy" src="https://code.jquery.com/jquery.js"></script>
+
+	<!-- Include all compiled plugins (below), or include individual files as needed -->
+	<script th:fragment="copy"
+		src="//netdna.bootstrapcdn.com/bootstrap/3.0.1/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
