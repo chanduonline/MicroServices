@@ -1,0 +1,53 @@
+Ribbon as a load balancing Application steps
+============================================
+step1 :create a spring boot starter project using the following dependecies
+Ribbon,web 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+		</dependency>
+step2:use the following properties.yml file
+
+spring:
+  application:
+    name: MyService
+MyService:
+   ribbon:
+     eureka:
+       enabled:false
+     listOfServers: server-host:1073,server-host:1072,server-host:1071,server-host:1070,
+
+
+step3:create a demo client 
+package com.chandra;
+
+import java.net.URI;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class DemoController {
+	@Autowired
+	private LoadBalancerClient loadBalancer;
+	
+	@GetMapping("/GetEndPoint")
+	private String greeting()
+	{
+		ServiceInstance instance = loadBalancer.choose("MyService");
+		URI storesUri = URI.create(String.format("http://%s:%s", instance.getHost(),instance.getPort()));
+		return storesUri.toString();
+	}
+
+}
+
+
+step4:open the browser use the following url to check balancing
+http://localhost:8080/GetEndPoint
