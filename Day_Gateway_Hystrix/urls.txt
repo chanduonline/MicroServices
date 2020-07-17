@@ -1,0 +1,12 @@
+hystrix dashboard url:
+
+http://localhost:8081/hystrix
+
+steam url
+http://localhost:8080/actuator/hystrix.stream
+
+
+countries
+http://localhost:8080/all
+jokes
+http://localhost:8080/v1/joke
