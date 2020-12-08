@@ -1,0 +1,451 @@
+Microservice Zuul Gateway Eureka Server Side Load Balancing
+===========================================================
+
+1.SpringEurekaService:
+=====================
+
+step1:create Spring starter project using Eureka-Server following dependecies
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+</dependency>
+
+step2:create application.properties 
+server.port=8090
+eureka.instance.hostname=localhost
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+
+step3:create a main method class using @EnableEurekaServer
+package com.chandra;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class SpringEurekaServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringEurekaServiceApplication.class, args);
+	}
+
+}
+
+2.Employee-Zuul-Service:
+========================
+
+step1:create a spring starter project using following dependecies.
+
+	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+	</dependency>
+
+	<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-zuul</artifactId>
+	</dependency>
+
+	<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-eureka</artifactId>
+	</dependency>
+
+step2:create a application.properties
+
+zuul.routes.producer.url=http://localhost:8080
+eureka.client.serviceUrl.defaultZone=http://localhost:8090/eureka
+server.port=8079
+spring.application.name=employee-zuul-service
+
+step3:create Filter classes(ErrorFilter,PostFilter,PreFilter,RouteFilter)
+
+package com.chandra.filter;
+
+import com.netflix.zuul.ZuulFilter;
+
+public class ErrorFilter extends ZuulFilter {
+
+	@Override
+	public String filterType() {
+		return "error";
+	}
+
+	@Override
+	public int filterOrder() {
+		return 0;
+	}
+
+	@Override
+	public boolean shouldFilter() {
+		return true;
+	}
+
+	@Override
+	public Object run() {
+		System.out.println("Using Route Filter");
+
+		return null;
+	}
+
+}
+
+package com.chandra.filter;
+
+import com.netflix.zuul.ZuulFilter;
+
+public class PostFilter extends ZuulFilter {
+
+	@Override
+	public String filterType() {
+		return "post";
+	}
+
+	@Override
+	public int filterOrder() {
+		return 0;
+	}
+
+	@Override
+	public boolean shouldFilter() {
+		return true;
+	}
+
+	@Override
+	public Object run() {
+		System.out.println("Using Post Filter");
+
+		return null;
+	}
+
+}
+
+package com.chandra.filter;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.netflix.zuul.ZuulFilter;
+import com.netflix.zuul.context.RequestContext;
+
+public class PreFilter extends ZuulFilter {
+
+	@Override
+	public String filterType() {
+		return "pre";
+	}
+
+	@Override
+	public int filterOrder() {
+		return 0;
+	}
+
+	@Override
+	public boolean shouldFilter() {
+		return true;
+	}
+
+	@Override
+	public Object run() {
+		RequestContext ctx = RequestContext.getCurrentContext();
+		HttpServletRequest request = ctx.getRequest();
+
+		System.out.println(
+				"Request Method : " + request.getMethod() + " Request URL : " + request.getRequestURL().toString());
+
+		return null;
+	}
+
+}
+
+package com.chandra.filter;
+
+import com.netflix.zuul.ZuulFilter;
+
+public class RouteFilter extends ZuulFilter {
+
+	@Override
+	public String filterType() {
+		return "route";
+	}
+
+	@Override
+	public int filterOrder() {
+		return 0;
+	}
+
+	@Override
+	public boolean shouldFilter() {
+		return true;
+	}
+
+	@Override
+	public Object run() {
+		System.out.println("Using Route Filter");
+
+		return null;
+	}
+
+}
+
+step4:create a main class act as Eureka client
+
+package com.chandra;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
+import org.springframework.context.annotation.Bean;
+
+import com.chandra.filter.ErrorFilter;
+import com.chandra.filter.PostFilter;
+import com.chandra.filter.PreFilter;
+import com.chandra.filter.RouteFilter;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableZuulProxy
+public class SpringBootHelloWorldApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootHelloWorldApplication.class, args);
+	}
+
+	@Bean
+	public PreFilter preFilter() {
+		return new PreFilter();
+	}
+
+	@Bean
+	public PostFilter postFilter() {
+		return new PostFilter();
+	}
+
+	@Bean
+	public ErrorFilter errorFilter() {
+		return new ErrorFilter();
+	}
+
+	@Bean
+	public RouteFilter routeFilter() {
+		return new RouteFilter();
+	}
+}
+
+3.Employee-Producer:
+====================
+
+step1:create a spring starter project using the following dependecies
+<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-starter-eureka</artifactId>
+</dependency>
+
+step2:create a application.properties
+
+spring.application.name=employee-producer
+eureka.client.serviceUrl.defaultZone=http://localhost:8090/eureka
+
+step3:create a model class(Employee.java)
+
+package com.chandra.model;
+
+public class Employee {
+	private String empId;
+	private String name;
+	private String designation;
+	private double salary;
+
+	public Employee() {
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesignation() {
+		return designation;
+	}
+
+	public void setDesignation(String designation) {
+		this.designation = designation;
+	}
+
+	public double getSalary() {
+		return salary;
+	}
+
+	public void setSalary(double salary) {
+		this.salary = salary;
+	}
+
+	public String getEmpId() {
+		return empId;
+	}
+
+	public void setEmpId(String empId) {
+		this.empId = empId;
+	}
+
+}
+step4: create test controller to access employees
+
+package com.chandra.controllers;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.chandra.model.Employee;
+
+@RestController
+public class TestController {
+
+	@RequestMapping(value = "/employee", method = RequestMethod.GET)
+	public Employee firstPage() {
+
+		Employee emp = new Employee();
+		emp.setName("emp1");
+		emp.setDesignation("manager");
+		emp.setEmpId("1");
+		emp.setSalary(3000);
+
+		return emp;
+	}
+
+}
+
+step5: create discovery client application
+package com.chandra;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SpringBootHelloWorldApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootHelloWorldApplication.class, args);
+	}
+}
+
+
+4.Employee-Producer:
+====================
+step1:create a spring boot starter project along with following dependecies
+<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-starter-eureka</artifactId>
+</dependency>
+
+step2:create a application.properties
+
+server.port=8091
+spring.application.name=employee-consumer
+eureka.client.serviceUrl.defaultZone=http://localhost:8090/eureka
+
+step3:create a consumer controller class
+
+package com.chandra.controllers;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+@Controller
+public class ConsumerControllerClient {
+
+	@Autowired
+	private DiscoveryClient discoveryClient;
+
+	public void getEmployee() throws RestClientException, IOException {
+
+		List<ServiceInstance> instances = discoveryClient.getInstances("EMPLOYEE-ZUUL-SERVICE");
+		ServiceInstance serviceInstance = instances.get(0);
+
+		String baseUrl = serviceInstance.getUri().toString();
+
+		baseUrl = baseUrl + "/producer/employee";
+
+		RestTemplate restTemplate = new RestTemplate();
+		ResponseEntity<String> response = null;
+		try {
+			response = restTemplate.exchange(baseUrl, HttpMethod.GET, getHeaders(), String.class);
+		} catch (Exception ex) {
+			System.out.println(ex);
+		}
+		System.out.println(response.getBody());
+	}
+
+	private static HttpEntity<?> getHeaders() throws IOException {
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+		return new HttpEntity<>(headers);
+	}
+}
+
+step4:create a main class using enable eureka client
+package com.chandra;
+
+import java.io.IOException;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestClientException;
+
+import com.chandra.controllers.ConsumerControllerClient;
+
+@SpringBootApplication
+public class SpringBootHelloWorldApplication {
+
+	public static void main(String[] args) throws RestClientException, IOException {
+		ApplicationContext ctx = SpringApplication.run(
+				SpringBootHelloWorldApplication.class, args);
+		
+		ConsumerControllerClient consumerControllerClient=ctx.getBean(ConsumerControllerClient.class);
+		System.out.println(consumerControllerClient);
+		consumerControllerClient.getEmployee();
+		
+	}
+	
+	@Bean
+	public  ConsumerControllerClient  consumerControllerClient()
+	{
+		return  new ConsumerControllerClient();
+	}
+}
+
+
+
